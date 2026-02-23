@@ -9,10 +9,10 @@ TYPES: BEGIN OF ty_alv,                                         "Structure for A
          "put your fields here
        END OF ty_alv.
 
-DATA: gt_alv TYPE TABLE OF ty_alv.                              "Internal table for ALV
+DATA: gt_alv TYPE TABLE OF ty_alv,                              "Internal table for ALV
       go_alv_t_descr TYPE REF TO cl_abap_tabledescr,            "Table description object
       gr_alv_s_descr TYPE REF TO cl_abap_structdescr,           "Structure description object
-      gt_alv_f_descr TYPE abap_compdescr.                       "Field description ALV table
+      gt_alv_f_descr TYPE abap_compdescr_tab.                       "Field description ALV table
 
 DATA: go_alv TYPE REF TO cl_salv_table,                         "SALV object
       go_container TYPE REF TO cl_gui_custom_container,         "Container for ALV
@@ -24,4 +24,3 @@ DATA: go_alv TYPE REF TO cl_salv_table,                         "SALV object
       go_functions TYPE REF TO cl_salv_functions_list,          "Functions object
       go_sort TYPE REF TO cl_salv_sort,                         "Sort object
       go_filter TYPE REF TO cl_salv_filter.                     "Filter object
-      go_events TYPE REF TO cl_salv_events_table.               "Events object
