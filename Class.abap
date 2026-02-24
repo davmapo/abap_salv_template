@@ -42,6 +42,7 @@ CLASS lcl_event_handler IMPLEMENTATION.
                 DELETE lt_selected_rows = row.
             ENDIF.
         ENDIF.
+        go_selection->set_selected_rows( lt_selected_rows ).
         go_alv->refresh( s_stable = VALUE #( row = abap_true col = abap_true )  ).
 
     ENDMETHOD.
@@ -59,7 +60,7 @@ CLASS lcl_event_handler IMPLEMENTATION.
             " Example
             WHEN '1_MY_FUNCTION'.
                 
-                PERFORM f_1_my_function USING lt_selected_row.
+                PERFORM f_1_my_function USING lt_selected_rows.
 
         " Add more cases as needed for other fields
 

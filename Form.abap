@@ -15,9 +15,6 @@ FORM f_display_salv USING pr_table TYPE REF TO data.
     ELSE.
         TRY.
 
-            " Call to get ALV table description
-            PERFORM f_descr_t_alv USING REF #( <lt_table> ).
-
             " Create custom container for ALV --> No need for SALV without container
             CREATE OBJECT go_container
                 EXPORTING
@@ -33,6 +30,11 @@ FORM f_display_salv USING pr_table TYPE REF TO data.
                 CHANGING
                 t_table      = <lt_table>.
         
+            " Get ALV table description
+            go_alv_t_descr ?= cl_abap_typedescr=>describe_by_data( <lt_table> ).
+            go_alv_s_descr ?= go_alv_t_descr->get_table_line_type( ).
+            gt_alv_f_descr = go_alv_s_descr->components.
+            
             " Call form to modify display settings
             PERFORM f_modify_display_settings.
 
@@ -64,20 +66,6 @@ FORM f_display_salv USING pr_table TYPE REF TO data.
 ENDFORM.
 
 *&---------------------------------------------------------------------*
-*& Form f_descr_t_alv.
-*&---------------------------------------------------------------------*
-FORM f_descr_t_alv USING pr_table TYPE REF TO data.
-
-    FIELD-SYMBOLS: <lt_table> TYPE ANY TABLE.
-    ASSIGN pr_table->* TO <lt_table>.
-
-    " Get ALV table description
-    go_alv_t_descr ?= cl_abap_typedescr=>describe_by_data( <lt_table> ).
-    gr_alv_s_descr ?= go_alv_t_descr->get_table_line_type( ).
-    gt_alv_f_descr = gr_alv_s_descr->components.
-ENDFORM.
-
-*&---------------------------------------------------------------------*
 *& Form f_modify_display_settings.
 *&---------------------------------------------------------------------*
 FORM f_modify_display_settings.
@@ -106,12 +94,14 @@ FORM f_modify_layout.
 ENDFORM.
 
 *&---------------------------------------------------------------------*
-*& Form f_modify_columns
+*& Form f_set_columns
 *&---------------------------------------------------------------------*
-FORM f_modify_columns.
+FORM f_set_columns.
 
     " Get columns object
-*    go_columns = go_alv->get_columns( ).
+    go_columns = go_alv->get_columns( ).
+
+
 *    go_columns->set_optimize( abap_true ).  " Optimize column widths. It's better to use this method on a single column, 
                                             " but if you want to optimize all columns, don't use fit_to_table_size in settings.
 
@@ -173,8 +163,9 @@ ENDFORM.
 *&---------------------------------------------------------------------*
 FORM f_set_functions.
 
+    " !!! can't use this method with a container. Only full-screen mode.
     go_alv->set_screen_status(
-        pfstatus      = 'ZMY_STATUS' "PF-STATUS copiato in SE41
+        pfstatus      = 'ZMY_STATUS' "PF-STATUS copiato in SE41: program = SAPLSALV_METADATA_STATUS; status = SALV_TABLE_STANDARD
         report        = sy-repid
         set_functions = go_alv->c_functions_all ). " Set standard functions.
                                                     " Possible values: c_functions_all, c_functions_default, c_functions_none
@@ -200,7 +191,5 @@ FORM f_set_functions.
         CATCH cx_root INTO DATA(lx_root).
             MESSAGE lx_root TYPE 'E'.
     ENDTRY.
-
-    "add more functions as needed
 
 ENDFORM.

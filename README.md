@@ -4,6 +4,27 @@ Template riutilizzabile per la creazione di report ALV con la classe `CL_SALV_TA
 
 ---
 
+## Indice
+
+- [Struttura del progetto](#struttura-del-progetto)
+- [Global data (`Z_SALV_TOP`)](#global-data-z_salv_top)
+  - [Tipi](#tipi)
+  - [Variabili globali](#variabili-globali)
+- [Class (`Z_SALV_CLASS`)](#class-z_salv_class)
+  - [`lcl_event_handler`](#lcl_event_handler)
+    - [Metodo `m_link_click`](#metodo-m_link_click)
+    - [Metodo `m_added_function`](#metodo-m_added_function)
+- [Form (`Z_SALV_FORM`)](#form-z_salv_form)
+  - [`f_display_salv`](#f_display_salv)
+  - [`f_modify_display_settings`](#f_modify_display_settings)
+  - [`f_modify_layout`](#f_modify_layout)
+  - [`f_set_columns`](#f_set_columns)
+  - [`f_set_functions`](#f_set_functions)
+- [Flusso di esecuzione](#flusso-di-esecuzione)
+- [Note d'uso](#note-duso)
+
+---
+
 ## Struttura del progetto
 
 | File | Include ABAP | Descrizione |
@@ -31,7 +52,7 @@ Definisce tutti i tipi e le variabili globali condivisi tra gli include.
 |---|---|---|
 | `gt_alv` | `TABLE OF ty_alv` | Tabella interna con i dati da visualizzare nell'ALV |
 | `go_alv_t_descr` | `REF TO cl_abap_tabledescr` | Oggetto per la descrizione della tabella (RTTI) |
-| `gr_alv_s_descr` | `REF TO cl_abap_structdescr` | Oggetto per la descrizione della struttura della tabella (RTTI) |
+| `go_alv_s_descr` | `REF TO cl_abap_structdescr` | Oggetto per la descrizione della struttura della tabella (RTTI) |
 | `gt_alv_f_descr` | `abap_compdescr_tab` | Tabella con i descrittori dei singoli campi della struttura |
 | `go_alv` | `REF TO cl_salv_table` | Oggetto principale SALV |
 | `go_container` | `REF TO cl_gui_custom_container` | Container grafico per l'ALV (necessario solo con screen custom) |
@@ -88,32 +109,18 @@ Gestisce la pressione dei bottoni custom aggiunti alla toolbar dell'ALV.
 FORM f_display_salv USING pr_table TYPE REF TO data.
 ```
 
-Form principale che crea e visualizza l'ALV.
+Form principale che crea e visualizza l'ALV. Riceve la tabella dati come `TYPE REF TO data` (riferimento generico), il che permette di richiamarla con tabelle di struttura diversa senza modificare la firma della form.
 
 - Se `go_alv` è già istanziato, esegue un semplice `refresh()`.
 - Altrimenti:
-  1. Assegna il riferimento `pr_table` a un field-symbol generico.
-  2. Chiama `f_descr_t_alv` per leggere la struttura della tabella via RTTI.
-  3. Crea il `go_container` con il nome `'CONTAINER'` (necessario solo con screen custom).
-  4. Istanzia l'oggetto ALV tramite `cl_salv_table=>factory`.
+  1. Assegna il riferimento `pr_table` a un field-symbol generico (`FIELD-SYMBOLS: <lt_table> TYPE ANY TABLE`), dereferenziando il puntatore per passare la tabella a `cl_salv_table=>factory`.
+  2. Crea il `go_container` con il nome `'CONTAINER'` (necessario solo con screen custom).
+  3. Istanzia l'oggetto ALV tramite `cl_salv_table=>factory`.
+  4. Legge la struttura della tabella via RTTI (inline): popola `go_alv_t_descr`, `go_alv_s_descr`, `gt_alv_f_descr`.
   5. Chiama le form di configurazione: `f_modify_display_settings`, `f_modify_layout`, `f_set_columns`, `f_set_functions`.
   6. Registra i gestori degli eventi (`m_link_click`, `m_added_function`) tramite `SET HANDLER`.
   7. Chiama `go_alv->display()` per mostrare l'ALV.
 - Gestisce le eccezioni `cx_salv_msg` e `cx_root`.
-
----
-
-### `f_descr_t_alv`
-
-```abap
-FORM f_descr_t_alv USING pr_table TYPE REF TO data.
-```
-
-Popola le variabili globali di descrizione della struttura tramite RTTI.
-
-- `go_alv_t_descr`: descrittore della tabella interna.
-- `gr_alv_s_descr`: descrittore della struttura della singola riga (line type).
-- `gt_alv_f_descr`: tabella con i componenti (campi) della struttura, usata poi in `f_modify_columns`.
 
 ---
 
@@ -150,10 +157,10 @@ Configura il layout dell'ALV e la modalità di selezione righe.
 
 ---
 
-### `f_modify_columns`
+### `f_set_columns`
 
 ```abap
-FORM f_modify_columns.
+FORM f_set_columns.
 ```
 
 Configura le singole colonne dell'ALV. Scorre `gt_alv_f_descr` tramite un `LOOP` e per ogni campo esegue un `CASE` sul nome.
@@ -189,7 +196,7 @@ FORM f_set_functions.
 
 Configura la toolbar dell'ALV con funzioni standard e bottoni custom.
 
-- `go_alv->set_screen_status`: imposta un PF-STATUS custom (`ZMY_STATUS`, da copiare in SE41) e abilita tutte le funzioni standard (`c_functions_all`). Valori possibili: `c_functions_all`, `c_functions_default`, `c_functions_none`.
+- `go_alv->set_screen_status`: imposta un PF-STATUS custom (`ZMY_STATUS`, da copiare in SE41 da `program = SAPLSALV_METADATA_STATUS; status = SALV_TABLE_STANDARD`) e abilita tutte le funzioni standard (`c_functions_all`). Valori possibili: `c_functions_all`, `c_functions_default`, `c_functions_none`. **Attenzione: non utilizzabile con un container — solo in full-screen mode.**
 - `go_functions->set_all( abap_true )`: abilita tutte le funzioni standard.
 - `go_functions->add_function(...)`: aggiunge un bottone custom alla toolbar.
 
@@ -216,9 +223,10 @@ START-OF-SELECTION
         └─ SI  → f_display_salv( REF #( gt_alv ) )
                     ├─ go_alv già istanziato? → go_alv->refresh()
                     └─ NO
-                        ├─ f_descr_t_alv         (RTTI: legge struttura tabella)
+                        ├─ ASSIGN pr_table → <lt_table>
                         ├─ CREATE OBJECT go_container
                         ├─ cl_salv_table=>factory (crea oggetto ALV)
+                        ├─ RTTI inline (go_alv_t_descr, go_alv_s_descr, gt_alv_f_descr)
                         ├─ f_modify_display_settings
                         ├─ f_modify_layout
                         ├─ f_set_columns
@@ -233,5 +241,5 @@ START-OF-SELECTION
 
 - La struttura `ty_alv` in `Z_SALV_TOP` va completata con i campi del proprio report.
 - Il container (`go_container`) è necessario solo se si usa uno screen custom con `SELECTION-SCREEN` o dynpro. Per un report semplice può essere rimosso insieme al parametro `r_container` nella `factory`.
-- In `f_modify_columns`, le righe `go_columns->get_columns()` e `set_optimize()` sono commentate: decommentarle se si vuole ottimizzare tutte le colonne globalmente (in alternativa a `set_fit_column_to_table_size` nelle display settings). Adattare i `WHEN` ai nomi dei propri campi.
+- In `f_set_columns`, le righe `go_columns->get_columns()` e `set_optimize()` sono commentate: decommentarle se si vuole ottimizzare tutte le colonne globalmente (in alternativa a `set_fit_column_to_table_size` nelle display settings). Adattare i `WHEN` ai nomi dei propri campi.
 - Per aggiungere nuovi bottoni custom, aggiungere una chiamata a `add_function` in `f_set_functions` e il relativo `WHEN` in `m_added_function`.
