@@ -1,69 +1,69 @@
 # ABAP SALV Template
 
-Template riutilizzabile per la creazione di report ALV con la classe `CL_SALV_TABLE` in ABAP.
+Reusable template for creating ALV reports using the `CL_SALV_TABLE` class in ABAP.
 
 ---
 
-## Indice
+## Table of Contents
 
-- [Struttura del progetto](#struttura-del-progetto)
+- [Project structure](#project-structure)
 - [Global data (`Z_SALV_TOP`)](#global-data-z_salv_top)
-  - [Tipi](#tipi)
-  - [Variabili globali](#variabili-globali)
+  - [Types](#types)
+  - [Global variables](#global-variables)
 - [Class (`Z_SALV_CLASS`)](#class-z_salv_class)
   - [`lcl_event_handler`](#lcl_event_handler)
-    - [Metodo `m_link_click`](#metodo-m_link_click)
-    - [Metodo `m_added_function`](#metodo-m_added_function)
+    - [Method `m_link_click`](#method-m_link_click)
+    - [Method `m_added_function`](#method-m_added_function)
 - [Form (`Z_SALV_FORM`)](#form-z_salv_form)
   - [`f_display_salv`](#f_display_salv)
   - [`f_modify_display_settings`](#f_modify_display_settings)
   - [`f_modify_layout`](#f_modify_layout)
   - [`f_set_columns`](#f_set_columns)
   - [`f_set_functions`](#f_set_functions)
-- [Flusso di esecuzione](#flusso-di-esecuzione)
-- [Note d'uso](#note-duso)
+- [Execution flow](#execution-flow)
+- [Usage notes](#usage-notes)
 
 ---
 
-## Struttura del progetto
+## Project structure
 
-| File | Include ABAP | Descrizione |
+| File | ABAP Include | Description |
 |---|---|---|
-| `Main.abap` | `Z_SALV` | Report principale, entry point |
-| `Global data.abap` | `Z_SALV_TOP` | Dati globali, tipi e variabili |
-| `Class.abap` | `Z_SALV_CLASS` | Classe per la gestione degli eventi |
-| `Form.abap` | `Z_SALV_FORM` | Form routines per la visualizzazione e configurazione dell'ALV |
+| `Main.abap` | `Z_SALV` | Main report, entry point |
+| `Global data.abap` | `Z_SALV_TOP` | Global data, types and variables |
+| `Class.abap` | `Z_SALV_CLASS` | Class for event handling |
+| `Form.abap` | `Z_SALV_FORM` | Form routines for ALV display and configuration |
 
 ---
 
 ## Global data (`Z_SALV_TOP`)
 
-Definisce tutti i tipi e le variabili globali condivisi tra gli include.
+Defines all types and global variables shared across includes.
 
-### Tipi
+### Types
 
-| Tipo | Descrizione |
+| Type | Description |
 |---|---|
-| `ty_alv` | Struttura delle righe della tabella ALV. Aggiungere qui i campi necessari. |
+| `ty_alv` | Structure of ALV table rows. Add the required fields here. |
 
-### Variabili globali
+### Global variables
 
-| Variabile | Tipo | Descrizione |
+| Variable | Type | Description |
 |---|---|---|
-| `gt_alv` | `TABLE OF ty_alv` | Tabella interna con i dati da visualizzare nell'ALV |
-| `go_alv_t_descr` | `REF TO cl_abap_tabledescr` | Oggetto per la descrizione della tabella (RTTI) |
-| `go_alv_s_descr` | `REF TO cl_abap_structdescr` | Oggetto per la descrizione della struttura della tabella (RTTI) |
-| `gt_alv_f_descr` | `abap_compdescr_tab` | Tabella con i descrittori dei singoli campi della struttura |
-| `go_alv` | `REF TO cl_salv_table` | Oggetto principale SALV |
-| `go_container` | `REF TO cl_gui_custom_container` | Container grafico per l'ALV (necessario solo con screen custom) |
-| `go_settings` | `REF TO cl_salv_display_settings` | Oggetto per le impostazioni di visualizzazione |
-| `go_layout` | `REF TO cl_salv_layout` | Oggetto per la gestione del layout |
-| `go_selection` | `REF TO cl_salv_selections` | Oggetto per la gestione della selezione righe |
-| `go_columns` | `REF TO cl_salv_columns_table` | Oggetto per la gestione delle colonne |
-| `go_column` | `REF TO cl_salv_column_table` | Oggetto per la gestione di una singola colonna |
-| `go_functions` | `REF TO cl_salv_functions_list` | Oggetto per la gestione dei bottoni/funzioni della toolbar |
-| `go_sort` | `REF TO cl_salv_sort` | Oggetto per la gestione dell'ordinamento |
-| `go_filter` | `REF TO cl_salv_filter` | Oggetto per la gestione dei filtri |
+| `gt_alv` | `TABLE OF ty_alv` | Internal table holding the data to display in the ALV |
+| `go_alv_t_descr` | `REF TO cl_abap_tabledescr` | Object for table description (RTTI) |
+| `go_alv_s_descr` | `REF TO cl_abap_structdescr` | Object for table structure description (RTTI) |
+| `gt_alv_f_descr` | `abap_compdescr_tab` | Table with descriptors of the individual structure fields |
+| `go_alv` | `REF TO cl_salv_table` | Main SALV object |
+| `go_container` | `REF TO cl_gui_custom_container` | Graphical container for the ALV (only needed with a custom screen) |
+| `go_settings` | `REF TO cl_salv_display_settings` | Object for display settings |
+| `go_layout` | `REF TO cl_salv_layout` | Object for layout management |
+| `go_selection` | `REF TO cl_salv_selections` | Object for row selection management |
+| `go_columns` | `REF TO cl_salv_columns_table` | Object for column management |
+| `go_column` | `REF TO cl_salv_column_table` | Object for single column management |
+| `go_functions` | `REF TO cl_salv_functions_list` | Object for toolbar buttons/functions management |
+| `go_sort` | `REF TO cl_salv_sort` | Object for sort management |
+| `go_filter` | `REF TO cl_salv_filter` | Object for filter management |
 
 ---
 
@@ -71,33 +71,33 @@ Definisce tutti i tipi e le variabili globali condivisi tra gli include.
 
 ### `lcl_event_handler`
 
-Classe locale per la gestione degli eventi generati dall'ALV.
+Local class for handling events raised by the ALV.
 
-#### Metodo `m_link_click`
+#### Method `m_link_click`
 
 ```abap
 m_link_click FOR EVENT link_click OF cl_salv_events_table
   IMPORTING row, column
 ```
 
-Gestisce il click su una cella di tipo `checkbox_hotspot`.
+Handles clicks on cells of type `checkbox_hotspot`.
 
-- Legge la riga cliccata dalla tabella `gt_alv` tramite l'indice `row`.
-- Se il campo `checkbox` è vuoto, lo imposta a `'X'` e aggiunge la riga alla lista delle righe selezionate (`lt_selected_rows`).
-- Se `checkbox` è già selezionato, lo deseleziona e rimuove la riga dalla lista.
-- Chiama `go_alv->refresh()` con stabilizzazione di righe e colonne per aggiornare la visualizzazione senza perdere la posizione.
+- Reads the clicked row from `gt_alv` using the `row` index.
+- If the `checkbox` field is empty, sets it to `'X'` and adds the row to the selected rows list (`lt_selected_rows`).
+- If `checkbox` is already checked, clears it and removes the row from the list.
+- Calls `go_alv->refresh()` with row and column stabilization to update the display without losing the current position.
 
-#### Metodo `m_added_function`
+#### Method `m_added_function`
 
 ```abap
 m_added_function FOR EVENT added_function OF cl_salv_events_table
   IMPORTING e_salv_function
 ```
 
-Gestisce la pressione dei bottoni custom aggiunti alla toolbar dell'ALV.
+Handles presses of custom buttons added to the ALV toolbar.
 
-- Usa un `CASE` su `e_salv_function` per identificare il bottone premuto e richiamare la form corrispondente.
-- Esempio: alla pressione di `'1_MY_FUNCTION'` viene chiamata `f_1_my_function`.
+- Uses a `CASE` on `e_salv_function` to identify the pressed button and call the corresponding form.
+- Example: pressing `'1_MY_FUNCTION'` calls `f_1_my_function`.
 
 ---
 
@@ -109,18 +109,18 @@ Gestisce la pressione dei bottoni custom aggiunti alla toolbar dell'ALV.
 FORM f_display_salv USING pr_table TYPE REF TO data.
 ```
 
-Form principale che crea e visualizza l'ALV. Riceve la tabella dati come `TYPE REF TO data` (riferimento generico), il che permette di richiamarla con tabelle di struttura diversa senza modificare la firma della form.
+Main form that creates and displays the ALV. Receives the data table as `TYPE REF TO data` (generic reference), which allows it to be called with tables of different structures without changing the form signature.
 
-- Se `go_alv` è già istanziato, esegue un semplice `refresh()`.
-- Altrimenti:
-  1. Assegna il riferimento `pr_table` a un field-symbol generico (`FIELD-SYMBOLS: <lt_table> TYPE ANY TABLE`), dereferenziando il puntatore per passare la tabella a `cl_salv_table=>factory`.
-  2. Crea il `go_container` con il nome `'CONTAINER'` (necessario solo con screen custom).
-  3. Istanzia l'oggetto ALV tramite `cl_salv_table=>factory`.
-  4. Legge la struttura della tabella via RTTI (inline): popola `go_alv_t_descr`, `go_alv_s_descr`, `gt_alv_f_descr`.
-  5. Chiama le form di configurazione: `f_modify_display_settings`, `f_modify_layout`, `f_set_columns`, `f_set_functions`.
-  6. Registra i gestori degli eventi (`m_link_click`, `m_added_function`) tramite `SET HANDLER`.
-  7. Chiama `go_alv->display()` per mostrare l'ALV.
-- Gestisce le eccezioni `cx_salv_msg` e `cx_root`.
+- If `go_alv` is already instantiated, performs a simple `refresh()`.
+- Otherwise:
+  1. Assigns the `pr_table` reference to a generic field-symbol (`FIELD-SYMBOLS: <lt_table> TYPE ANY TABLE`), dereferencing the pointer to pass the table to `cl_salv_table=>factory`.
+  2. Creates `go_container` with name `'CONTAINER'` (only needed with a custom screen).
+  3. Instantiates the ALV object via `cl_salv_table=>factory`.
+  4. Reads the table structure via RTTI (inline): populates `go_alv_t_descr`, `go_alv_s_descr`, `gt_alv_f_descr`.
+  5. Calls the configuration forms: `f_modify_display_settings`, `f_modify_layout`, `f_set_columns`, `f_set_functions`.
+  6. Registers event handlers (`m_link_click`, `m_added_function`) via `SET HANDLER`.
+  7. Calls `go_alv->display()` to show the ALV.
+- Handles exceptions `cx_salv_msg` and `cx_root`.
 
 ---
 
@@ -130,13 +130,13 @@ Form principale che crea e visualizza l'ALV. Riceve la tabella dati come `TYPE R
 FORM f_modify_display_settings.
 ```
 
-Configura le impostazioni di visualizzazione generali dell'ALV.
+Configures the general display settings of the ALV.
 
-| Metodo chiamato | Valore | Descrizione |
+| Method | Value | Description |
 |---|---|---|
-| `set_list_header` | `'MY TITLE'` | Titolo dell'ALV |
-| `set_striped_pattern` | `abap_true` | Righe con sfondo alternato per migliorare la leggibilità |
-| `set_fit_column_to_table_size` | `abap_true` | Adatta la larghezza delle colonne alla dimensione della tabella |
+| `set_list_header` | `'MY TITLE'` | ALV title |
+| `set_striped_pattern` | `abap_true` | Alternating row background for improved readability |
+| `set_fit_column_to_table_size` | `abap_true` | Stretches columns to fill the full table width |
 
 ---
 
@@ -146,14 +146,14 @@ Configura le impostazioni di visualizzazione generali dell'ALV.
 FORM f_modify_layout.
 ```
 
-Configura il layout dell'ALV e la modalità di selezione righe.
+Configures the ALV layout and row selection mode.
 
-| Metodo chiamato | Valore | Descrizione |
+| Method | Value | Description |
 |---|---|---|
-| `go_layout->set_key` | `report = sy-repid` | Chiave univoca per il salvataggio del layout |
-| `go_layout->set_default` | `abap_true` | Usa questo layout come predefinito |
-| `go_layout->set_save_restriction` | `restrict_none` | Permette all'utente di salvare layout personalizzati |
-| `go_selection->set_selection_mode` | `single` | Modalità selezione riga singola. Valori possibili: `none`, `single`, `multiple`, `cell`, `row_column` |
+| `go_layout->set_key` | `report = sy-repid` | Unique key for layout saving |
+| `go_layout->set_default` | `abap_true` | Use this layout as default |
+| `go_layout->set_save_restriction` | `restrict_none` | Allows the user to save custom layouts |
+| `go_selection->set_selection_mode` | `single` | Single row selection mode. Possible values: `none`, `single`, `multiple`, `cell`, `row_column` |
 
 ---
 
@@ -163,28 +163,28 @@ Configura il layout dell'ALV e la modalità di selezione righe.
 FORM f_set_columns.
 ```
 
-Configura le singole colonne dell'ALV. Scorre `gt_alv_f_descr` tramite un `LOOP` e per ogni campo esegue un `CASE` sul nome.
+Configures the individual ALV columns. Loops over `gt_alv_f_descr` and for each field executes a `CASE` on the field name.
 
-**Aggiunta colonna checkbox:**
-- `go_columns->add_column('CHECKBOX')`: aggiunge una colonna con nome `CHECKBOX`.
-- `set_cell_type( if_salv_c_cell_type=>checkbox_hotspot )`: imposta la cella come checkbox cliccabile.
+**Adding a checkbox column:**
+- `go_columns->add_column('CHECKBOX')`: adds a column named `CHECKBOX`.
+- `set_cell_type( if_salv_c_cell_type=>checkbox_hotspot )`: sets the cell type to clickable checkbox.
 
-**Configurazione per `'FIELD NAME'`** (campo di esempio):
+**Configuration for `'FIELD NAME'`** (example field):
 
-| Metodo | Descrizione |
+| Method | Description |
 |---|---|
-| `set_visible( abap_false )` | Nasconde la colonna |
-| `set_technical( abap_true )` | Imposta la colonna come tecnica (non visibile/selezionabile dall'utente) |
-| `set_color( ls_color )` | Colore della colonna. `col`: 0=default, 1=blu, 2=grigio, 3=giallo, 4=blu-grigio, 5=verde, 6=rosso, 7=arancione. `int`: 0=normale, 1=intenso. `inv`: 0=off, 1=inverso |
-| `set_short_text` / `set_medium_text` / `set_long_text` | Testi della colonna per le diverse larghezze |
-| `set_output_length( 25 )` | Larghezza fissa della colonna in caratteri |
+| `set_visible( abap_false )` | Hides the column |
+| `set_technical( abap_true )` | Marks the column as technical (not visible or selectable by the user) |
+| `set_color( ls_color )` | Column color. `col`: 0=default, 1=blue, 2=grey, 3=yellow, 4=blue-grey, 5=green, 6=red, 7=orange. `int`: 0=normal, 1=intense. `inv`: 0=off, 1=inverse |
+| `set_short_text` / `set_medium_text` / `set_long_text` | Column header texts for different display widths |
+| `set_output_length( 25 )` | Fixed column width in characters |
 
-**Configurazione per `'ICON'`:**
-- `set_icon( abap_true )`: interpreta il valore della cella come icona ABAP.
-- `set_optimized( abap_true )`: ottimizza la larghezza della colonna.
+**Configuration for `'ICON'`:**
+- `set_icon( abap_true )`: interprets the cell value as an ABAP icon.
+- `set_optimized( abap_true )`: optimizes the column width.
 
 **`WHEN OTHERS`:**
-- `set_optimized( abap_true )`: ottimizza automaticamente la larghezza di tutte le altre colonne.
+- `set_optimized( abap_true )`: automatically optimizes the width of all other columns.
 
 ---
 
@@ -194,38 +194,38 @@ Configura le singole colonne dell'ALV. Scorre `gt_alv_f_descr` tramite un `LOOP`
 FORM f_set_functions.
 ```
 
-Configura la toolbar dell'ALV con funzioni standard e bottoni custom.
+Configures the ALV toolbar with standard functions and custom buttons.
 
-- `go_alv->set_screen_status`: imposta un PF-STATUS custom (`ZMY_STATUS`, da copiare in SE41 da `program = SAPLSALV_METADATA_STATUS; status = SALV_TABLE_STANDARD`) e abilita tutte le funzioni standard (`c_functions_all`). Valori possibili: `c_functions_all`, `c_functions_default`, `c_functions_none`. **Attenzione: non utilizzabile con un container — solo in full-screen mode.**
-- `go_functions->set_all( abap_true )`: abilita tutte le funzioni standard.
-- `go_functions->add_function(...)`: aggiunge un bottone custom alla toolbar.
+- `go_alv->set_screen_status`: sets a custom PF-STATUS (`ZMY_STATUS`, to be copied in SE41 from `program = SAPLSALV_METADATA_STATUS; status = SALV_TABLE_STANDARD`) and enables all standard functions (`c_functions_all`). Possible values: `c_functions_all`, `c_functions_default`, `c_functions_none`. **Note: cannot be used with a container — full-screen mode only.**
+- `go_functions->set_all( abap_true )`: enables all standard functions.
+- `go_functions->add_function(...)`: adds a custom button to the toolbar.
 
-**Parametri di `add_function`:**
+**Parameters of `add_function`:**
 
-| Parametro | Descrizione |
+| Parameter | Description |
 |---|---|
-| `name` | Nome univoco del bottone (es. `'1_MY_FUNCTION'`) |
-| `icon` | Icona ABAP da visualizzare |
-| `text` | Testo del bottone |
-| `tooltip` | Testo del tooltip |
-| `position` | Posizione nella toolbar. Valori: `left_of_salv_functions`, `right_of_salv_functions`, `is_salv_functions` |
+| `name` | Unique button name (e.g. `'1_MY_FUNCTION'`) |
+| `icon` | ABAP icon to display |
+| `text` | Button label |
+| `tooltip` | Tooltip text |
+| `position` | Position in the toolbar. Values: `left_of_salv_functions`, `right_of_salv_functions`, `is_salv_functions` |
 
-Gestisce le eccezioni `cx_salv_existing`, `cx_salv_wrong_call`, `cx_root`.
+Handles exceptions `cx_salv_existing`, `cx_salv_wrong_call`, `cx_root`.
 
 ---
 
-## Flusso di esecuzione
+## Execution flow
 
 ```
 START-OF-SELECTION
-    └─ gt_alv popolato?
+    └─ gt_alv populated?
         ├─ NO  → MESSAGE W01
-        └─ SI  → f_display_salv( REF #( gt_alv ) )
-                    ├─ go_alv già istanziato? → go_alv->refresh()
+        └─ YES → f_display_salv( REF #( gt_alv ) )
+                    ├─ go_alv already instantiated? → go_alv->refresh()
                     └─ NO
                         ├─ ASSIGN pr_table → <lt_table>
                         ├─ CREATE OBJECT go_container
-                        ├─ cl_salv_table=>factory (crea oggetto ALV)
+                        ├─ cl_salv_table=>factory (create ALV object)
                         ├─ RTTI inline (go_alv_t_descr, go_alv_s_descr, gt_alv_f_descr)
                         ├─ f_modify_display_settings
                         ├─ f_modify_layout
@@ -237,9 +237,9 @@ START-OF-SELECTION
 
 ---
 
-## Note d'uso
+## Usage notes
 
-- La struttura `ty_alv` in `Z_SALV_TOP` va completata con i campi del proprio report.
-- Il container (`go_container`) è necessario solo se si usa uno screen custom con `SELECTION-SCREEN` o dynpro. Per un report semplice può essere rimosso insieme al parametro `r_container` nella `factory`.
-- In `f_set_columns`, le righe `go_columns->get_columns()` e `set_optimize()` sono commentate: decommentarle se si vuole ottimizzare tutte le colonne globalmente (in alternativa a `set_fit_column_to_table_size` nelle display settings). Adattare i `WHEN` ai nomi dei propri campi.
-- Per aggiungere nuovi bottoni custom, aggiungere una chiamata a `add_function` in `f_set_functions` e il relativo `WHEN` in `m_added_function`.
+- The `ty_alv` structure in `Z_SALV_TOP` must be filled with the fields of your report.
+- The container (`go_container`) is only needed when using a custom screen with `SELECTION-SCREEN` or a dynpro. For a simple report it can be removed along with the `r_container` parameter in the `factory` call.
+- In `f_set_columns`, the `go_columns->get_columns()` and `set_optimize()` lines are commented out: uncomment them to optimize all columns globally (as an alternative to `set_fit_column_to_table_size` in the display settings). Adapt the `WHEN` branches to your own field names.
+- To add new custom buttons, add an `add_function` call in `f_set_functions` and the corresponding `WHEN` branch in `m_added_function`.
